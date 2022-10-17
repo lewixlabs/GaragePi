@@ -1,6 +1,14 @@
-# RPiFEBP
-## Revision
-* 2021-09-26:V1.0
+# GaragePi
+## This a fork of geekpi repo + using CircuitPython SSD1306 library
+👉 keep in mind to use official [Adafruit CircuitPython SSD1306 library, instead of deprecate library Adafruit Python SSD1306 as described on main project repos
+Useful links:
+- [Adafruit CircuitPython SSD1306](https://github.com/adafruit/Adafruit_CircuitPython_SSD1306)
+- [Blog which helped me](https://giuliomagnifico.blog/tips/2022/05/18/geekpi-adafruit-fan-hat-rpi-fix-mod.html)
+### P.S.: GaragePi inspired by location of my pi4, guess? In my garage 🚘 😜
+</br>
+</br>
+
+# 📚 Official forked instructions
 ## Descriptions
 RPiFEBP stands for Raspberry Pi Fan Expansion Board Plus.
 It is a fan expansion board with 0.91 OLED Display and 4007 PWM Fan onboard, 4 programable LED indicators under the PCB board.
@@ -36,7 +44,7 @@ i2cdetect -y 1
 It will shows an address: `0x3c`
 
 ### Installation and Upgrade 
-* Adafruit_SSD1306 and Adafruit-BBIO
+* (DEPRECATED ~~Adafruit_SSD1306~~) and Adafruit-BBIO
 Those library and its dependency(Adafruit GPIO library) can be installed from PyPI by executing:
 ```
 sudo pip3 install pi-ina219
@@ -44,7 +52,7 @@ sudo pip3 install Adafruit-SSD1306
 sudo pip3 install Adafruit-BBIO
 ```
 or you can download and install it by manual:
-* Download SSD1306 library:
+* Download DEPRECATED ~~SSD1306 library~~:
 
 ```
 sudo python -m pip install --upgrade pip setuptools wheel
