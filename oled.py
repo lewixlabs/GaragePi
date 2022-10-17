@@ -63,23 +63,26 @@ while True:
 
     # Shell scripts for system monitoring from here:
     # https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load
-    cmd = "hostname -I | cut -d' ' -f1"
-    IP = subprocess.check_output(cmd, shell=True).decode("utf-8")
+    #cmd = "hostname -I | cut -d' ' -f1"
+    #IP = subprocess.check_output(cmd, shell=True).decode("utf-8")
+    
+    cmd = '/usr/bin/vcgencmd measure_temp'
+    CPUTemp = subprocess.check_output(cmd, shell=True).decode("utf-8")
     cmd = 'cut -f 1 -d " " /proc/loadavg'
-    CPU = subprocess.check_output(cmd, shell=True).decode("utf-8")
-    cmd = "free -m | awk 'NR==2{printf \"Mem: %s/%s MB  %.2f%%\", $3,$2,$3*100/$2 }'"
+    CPULoad = subprocess.check_output(cmd, shell=True).decode("utf-8")
+    cmd = "free -m | awk 'NR==2{printf \"RAM: %s/%sMB %.0f%%\", $3,$2,$3*100/$2 }'"
     MemUsage = subprocess.check_output(cmd, shell=True).decode("utf-8")
-    cmd = 'df -h | awk \'$NF=="/"{printf "Disk: %d/%d GB  %s", $3,$2,$5}\''
+    cmd = 'df -h | awk \'$NF=="/"{printf "Disk: %d/%dGB  %s", $3,$2,$5}\''
     Disk = subprocess.check_output(cmd, shell=True).decode("utf-8")
 
     # Write four lines of text.
 
-    draw.text((x, top + 0), "IP: " + IP, font=font, fill=255)
-    draw.text((x, top + 8), "CPU load: " + CPU, font=font, fill=255)
+    draw.text((x, top + 0), "CPU " + CPUTemp.replace("=",": "), font=font, fill=255)
+    draw.text((x, top + 8), "CPU load: " + CPULoad, font=font, fill=255)
     draw.text((x, top + 16), MemUsage, font=font, fill=255)
     draw.text((x, top + 25), Disk, font=font, fill=255)
 
     # Display image.
     disp.image(image)
     disp.show()
-    time.sleep(0.1)
+    time.sleep(5.0)
