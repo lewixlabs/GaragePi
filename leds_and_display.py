@@ -108,8 +108,10 @@ def main():
         while True:
             start_leds(0.1)
             update_display(disp,draw,img,fnt)
-            time.sleep(2)
+            time.sleep(1)
             stop_leds()
+            time.sleep(1)
+            
             # time.sleep(1)
     except KeyboardInterrupt:
         GPIO.cleanup()
