@@ -2,13 +2,13 @@ import RPi.GPIO as GPIO
 import time
 
 import subprocess
-from board import SCL, SDA
+#from board import SCL, SDA
 import busio
 from PIL import Image, ImageDraw, ImageFont
 import adafruit_ssd1306
 
 
-################################################ LEDS FUNCTIONS ################################################
+################################################ LEDS ################################################
 # BCM Number of LED indicators
 leds = [5, 13, 19, 6]
 
@@ -30,7 +30,9 @@ def stop_leds():
             GPIO.output(led, GPIO.LOW)   
 
 
-################################################ DISPLAY FUNCTIONS ################################################
+################################################ DISPLAY ################################################
+actual_page_number = 1
+
 def init_display():
     # Create the I2C interface.
     i2c = busio.I2C(SCL, SDA)
@@ -64,23 +66,12 @@ def init_display():
 
     return disp,draw,image,font
 
-def update_display(display_object,draw_object,img_prm,fnt_prm):
+def update_display(page_number,display_object,draw_object,img_prm,fnt_prm):
     # Draw a black filled box to clear the image.
     draw_object.rectangle((0, 0, display_object.width, display_object.height), outline=0, fill=0)
 
     # Shell scripts for system monitoring from here:
     # https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load
-    #cmd = "hostname -I | cut -d' ' -f1"
-    #IP = subprocess.check_output(cmd, shell=True).decode("utf-8")
-    
-    cmd = '/usr/bin/vcgencmd measure_temp'
-    CPUTemp = subprocess.check_output(cmd, shell=True).decode("utf-8")
-    cmd = 'cut -f 1 -d " " /proc/loadavg'
-    CPULoad = subprocess.check_output(cmd, shell=True).decode("utf-8")
-    cmd = "free -m | awk 'NR==2{printf \"RAM: %s/%sMB %.0f%%\", $3,$2,$3*100/$2 }'"
-    MemUsage = subprocess.check_output(cmd, shell=True).decode("utf-8")
-    cmd = 'df -h | awk \'$NF=="/"{printf "Disk: %d/%dGB  %s", $3,$2,$5}\''
-    Disk = subprocess.check_output(cmd, shell=True).decode("utf-8")
 
     # Draw some shapes.
     # First define some constants to allow easy resizing of shapes.
@@ -90,11 +81,39 @@ def update_display(display_object,draw_object,img_prm,fnt_prm):
     # Move left to right keeping track of the current x position for drawing shapes.
     x = 0
 
+    display_rows = []
+    if page_number == 1:
+            cmd = '/usr/bin/vcgencmd measure_temp'
+            CPUTemp = subprocess.check_output(cmd, shell=True).decode("utf-8")
+            display_rows.append(CPUTemp)
+
+            cmd = 'cut -f 1 -d " " /proc/loadavg'
+            CPULoad = subprocess.check_output(cmd, shell=True).decode("utf-8")
+            display_rows.append(CPULoad)
+
+            cmd = "free -m | awk 'NR==2{printf \"RAM: %s/%sMB %.0f%%\", $3,$2,$3*100/$2 }'"
+            MemUsage = subprocess.check_output(cmd, shell=True).decode("utf-8")
+            display_rows.append(MemUsage)
+
+            cmd = 'df -h | awk \'$NF=="/"{printf "Disk: %d/%dGB  %s", $3,$2,$5}\''
+            Disk = subprocess.check_output(cmd, shell=True).decode("utf-8")
+            display_rows.append(Disk)
+    else:
+            cmd = "hostname -I | cut -d' ' -f1"
+            IP = subprocess.check_output(cmd, shell=True).decode("utf-8")
+            display_rows.append(IP)
+            return
+
+    delta_y = 0
+    for actual_row in display_rows:
+        draw_object.text((x, top + delta_y), "CPU " + CPUTemp.replace("=",": "), font=fnt_prm, fill=255)
+        delta_y += 8
+
     # Write four lines of text.
-    draw_object.text((x, top + 0), "CPU " + CPUTemp.replace("=",": "), font=fnt_prm, fill=255)
-    draw_object.text((x, top + 8), "CPU load: " + CPULoad, font=fnt_prm, fill=255)
-    draw_object.text((x, top + 16), MemUsage, font=fnt_prm, fill=255)
-    draw_object.text((x, top + 25), Disk, font=fnt_prm, fill=255)
+    # draw_object.text((x, top + 0), "CPU " + CPUTemp.replace("=",": "), font=fnt_prm, fill=255)
+    # draw_object.text((x, top + 8), "CPU load: " + CPULoad, font=fnt_prm, fill=255)
+    # draw_object.text((x, top + 16), MemUsage, font=fnt_prm, fill=255)
+    # draw_object.text((x, top + 25), Disk, font=fnt_prm, fill=255)
 
     # Display image.
     display_object.image(img_prm)
@@ -107,10 +126,15 @@ def main():
     try:
         while True:
             start_leds(0.1)
-            update_display(disp,draw,img,fnt)
+            update_display(actual_page_number,disp,draw,img,fnt)
             time.sleep(1)
             stop_leds()
-            time.sleep(1)
+            time.sleep(3)
+            
+            if actual_page_number == 1:
+                actual_page_number = 2
+            else:
+                actual_page_number = 1
             
             # time.sleep(1)
     except KeyboardInterrupt:
