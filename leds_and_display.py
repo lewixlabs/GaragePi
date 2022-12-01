@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import time
 
 import subprocess
-#from board import SCL, SDA
+from board import SCL, SDA
 import busio
 from PIL import Image, ImageDraw, ImageFont
 import adafruit_ssd1306
@@ -31,7 +31,6 @@ def stop_leds():
 
 
 ################################################ DISPLAY ################################################
-actual_page_number = 1
 
 def init_display():
     # Create the I2C interface.
@@ -85,11 +84,11 @@ def update_display(page_number,display_object,draw_object,img_prm,fnt_prm):
     if page_number == 1:
             cmd = '/usr/bin/vcgencmd measure_temp'
             CPUTemp = subprocess.check_output(cmd, shell=True).decode("utf-8")
-            display_rows.append(CPUTemp)
+            display_rows.append("CPU " + CPUTemp.replace("=",": "))
 
             cmd = 'cut -f 1 -d " " /proc/loadavg'
             CPULoad = subprocess.check_output(cmd, shell=True).decode("utf-8")
-            display_rows.append(CPULoad)
+            display_rows.append("CPU load: " + CPULoad)
 
             cmd = "free -m | awk 'NR==2{printf \"RAM: %s/%sMB %.0f%%\", $3,$2,$3*100/$2 }'"
             MemUsage = subprocess.check_output(cmd, shell=True).decode("utf-8")
@@ -101,12 +100,11 @@ def update_display(page_number,display_object,draw_object,img_prm,fnt_prm):
     else:
             cmd = "hostname -I | cut -d' ' -f1"
             IP = subprocess.check_output(cmd, shell=True).decode("utf-8")
-            display_rows.append(IP)
-            return
+            display_rows.append("IP: " + IP)
 
     delta_y = 0
     for actual_row in display_rows:
-        draw_object.text((x, top + delta_y), "CPU " + CPUTemp.replace("=",": "), font=fnt_prm, fill=255)
+        draw_object.text((x, top + delta_y), actual_row, font=fnt_prm, fill=255)
         delta_y += 8
 
     # Write four lines of text.
@@ -123,13 +121,14 @@ def update_display(page_number,display_object,draw_object,img_prm,fnt_prm):
 def main():
     init_gpio()
     disp,draw,img,fnt = init_display()
+    actual_page_number = 1
     try:
         while True:
-            start_leds(0.1)
             update_display(actual_page_number,disp,draw,img,fnt)
+            start_leds(0.1)
             time.sleep(1)
             stop_leds()
-            time.sleep(3)
+            time.sleep(5)
             
             if actual_page_number == 1:
                 actual_page_number = 2
